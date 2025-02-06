@@ -27,10 +27,10 @@ const checkPoints = (values: number[], valueToMatch: number): boolean => {
   return false
 }
 
+//  this line: \
 const buildBearDiagonalValues = (startX, startY, gameState) => {
   const values = []
 
-  //  moving right and up on the grid
   let rhsXrunner = startX
   let rhsYrunner = startY
 
@@ -45,7 +45,6 @@ const buildBearDiagonalValues = (startX, startY, gameState) => {
   let lhsXrunner = startX - 1
   let lhsYrunner = startY - 1
 
-  //  moving left and down
   while (lhsXrunner < NUM_HORIZONTAL_CELLS && lhsYrunner < NUM_VERTICAL_CELLS && lhsXrunner >= 0 && lhsYrunner >= 0) {
     values.push(gameState[lhsXrunner][lhsYrunner])
 
@@ -56,10 +55,10 @@ const buildBearDiagonalValues = (startX, startY, gameState) => {
   return values
 }
 
+//  this line: /
 const buildBullDiagonalValues = (startX, startY, gameState) => {
   const values = []
 
-  //  moving right and down on the grid
   let rhsXrunner = startX
   let rhsYrunner = startY
 
@@ -70,9 +69,8 @@ const buildBullDiagonalValues = (startX, startY, gameState) => {
     rhsYrunner--
   }
 
-  //  moving left and up
   let lhsXrunner = startX - 1
-  let lhsYrunner = startY - 1
+  let lhsYrunner = startY + 1
 
   while (lhsXrunner < NUM_HORIZONTAL_CELLS && lhsYrunner < NUM_VERTICAL_CELLS && lhsXrunner >= 0 && lhsYrunner >= 0) {
     values.unshift(gameState[lhsXrunner][lhsYrunner])
@@ -95,10 +93,6 @@ const checkGame = (i: number, j: number, gameState) => {
 
   const bullDiagonalValues = buildBullDiagonalValues(i, j, gameState)
   const bearDiagonalValues = buildBearDiagonalValues(i, j, gameState)
-
-  console.log(bullDiagonalValues, "bull")
-
-  return
 
   if (checkPoints(columnValues, valueToMatch)) {
     return true
@@ -139,7 +133,7 @@ function App() {
     const hasUserWon = checkGame(i, lowestOpenColumn, copy)
 
     if (hasUserWon) {
-      console.log("WE HAVE A WINNER!!")
+      console.log("WE HAVE A WINNER!!", turn % 2 == 0 ? "black" : "red")
     }
 
     setTurn((turn + 1) % 2)
