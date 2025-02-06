@@ -3,17 +3,23 @@ import './App.css'
 import Grid from './Grid'
 
 const createGame = (gridWidth: number, gridHeight: number) => {
-  return [...Array(gridWidth)].map(_ => Array(gridHeight).fill(0))
+  return [...Array(gridWidth)].map(_ => Array(gridHeight).fill(-1))
 }
 
 function App() {
   const [gameState, setGame] = useState([])
+  const [turn, setTurn]      = useState(0)
 
   const updateGame = (i: number, j: number) => {
+    if (gameState[i][j] != -1) {
+      return
+    }
+
     const copy = JSON.parse(JSON.stringify(gameState))
-    copy[i][j] = 1
+    copy[i][j] = turn
 
     setGame(copy)
+    setTurn((turn + 1) % 2)
   }
 
   useEffect(() => {

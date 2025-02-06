@@ -19,29 +19,30 @@ function Grid(props) {
         { gameState.map((row, i) => {
           return (row.map((val, j) => {
             return (
-              <>
-              <rect 
-                key={`${i}${j}`}
-                width={sideLength} 
-                height={sideLength} 
-                x={i * sideLength} 
-                y={j * sideLength} 
-                fill="yellow"
-                stroke="#000"
-                onClick={() => {
-                  props.onPress(i, j)
-                }}
-              />
-
-              { val != 0 && 
-                <circle
-                  r={ circleRadius }
-                  cx={ (i * sideLength) + (sideLength / 2) }
-                  cy={ (j * sideLength) + (sideLength / 2) }
-                  fill={ val % 2 == 1 ? 'red' : 'black' }
+              <g key={`${i}${j}`}>
+                <rect 
+                  key={`${i}${j}`}
+                  width={sideLength} 
+                  height={sideLength} 
+                  x={i * sideLength} 
+                  y={j * sideLength} 
+                  fill="yellow"
+                  stroke="#000"
+                  onClick={() => {
+                    props.onPress(i, j)
+                  }}
                 />
-              }
-              </>
+
+                { val != -1 && 
+                  <circle
+                    key={`c_${i}${j}`}
+                    r={ circleRadius }
+                    cx={ (i * sideLength) + (sideLength / 2) }
+                    cy={ (j * sideLength) + (sideLength / 2) }
+                    fill={ val == 1 ? 'red' : 'black' }
+                  />
+                }
+              </g>
             )
           }))
         })}
