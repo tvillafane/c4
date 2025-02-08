@@ -128,13 +128,12 @@ const checkGame = (latestMove: Move, grid: number[][]) => {
   const bullDiagonalValues = buildBullDiagonalValues(i, j, grid)
   const bearDiagonalValues = buildBearDiagonalValues(i, j, grid)
 
-  if (checkPoints(columnValues, valueToMatch)) {
-    return true
-  } else if (checkPoints(rowValues, valueToMatch)) {
-    return true
-  } else if (checkPoints(bullDiagonalValues, valueToMatch)) {
-    return true
-  } else if (checkPoints(bearDiagonalValues, valueToMatch)) {
+  if (
+    checkPoints(columnValues, valueToMatch) || 
+    checkPoints(rowValues, valueToMatch) || 
+    checkPoints(bullDiagonalValues, valueToMatch) || 
+    checkPoints(bearDiagonalValues, valueToMatch)
+  ) {
     return true
   }
 
@@ -144,7 +143,16 @@ const checkGame = (latestMove: Move, grid: number[][]) => {
 function App() {
   const [gameState, setGameState] = useState<GameState>()
 
+  const resetGame = () => {
+    setGameState(createGame(NUM_HORIZONTAL_CELLS, NUM_VERTICAL_CELLS))
+  }
+
   const updateGame = (drop: Move) => {
+    //  TODO: error handling/notification
+    if (gameState!.grid[drop.i][drop.j] != -1) {
+      return
+    }
+
     if (gameState!.winningPlayerIndex > -1) {
       return
     }
@@ -211,6 +219,9 @@ function App() {
       <GameInfoHeader
         gameState={gameState}
       />
+      <div>
+        <button onClick={resetGame}>Reset Game</button>
+      </div>
     </>
   )
 }
