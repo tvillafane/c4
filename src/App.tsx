@@ -5,6 +5,7 @@ import GameInfoHeader from './GameInfoHeader'
 
 const NUM_HORIZONTAL_CELLS = 20
 const NUM_VERTICAL_CELLS   = 10 
+const WINNING_PATH_LENGTH  = 4
 
 export interface Move {
   i: number,
@@ -54,8 +55,7 @@ const checkPoints = (values: number[], valueToMatch: number): boolean => {
       currentStreak = 0
     }
 
-    //  TODO: could make this dynamic for flair
-    if (currentStreak == 4) {
+    if (currentStreak == WINNING_PATH_LENGTH) {
       return true
     }
   }
