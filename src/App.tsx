@@ -151,6 +151,18 @@ function App() {
         gameState={gameState}
         onPress={updateGame}
       />
+      <div className='gameInfo'>
+        <svg width={30} height={30} xmlns="http://www.w3.org/2000/svg">
+          <circle
+            r={15}
+            cx={15}
+            cy={15}
+            fill={ turn % 2 == 0 ? 'black' : 'red' }
+          />
+        </svg>
+        <h3>{ turn % 2 == 0 ? "black" : "red" } to play</h3>
+      </div>
+      
     </>
   )
 }
