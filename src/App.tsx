@@ -3,7 +3,7 @@ import './App.css'
 import Grid from './Grid'
 import GameInfoHeader from './GameInfoHeader'
 
-const NUM_HORIZONTAL_CELLS = 20
+const NUM_HORIZONTAL_CELLS = 10
 const NUM_VERTICAL_CELLS   = 10 
 const WINNING_PATH_LENGTH  = 4
 
