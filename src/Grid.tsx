@@ -1,22 +1,29 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import { Move, GameState } from './App'
 
-function Grid(props) {
+interface GridProps {
+  gameState: GameState,
+  onPress(move: Move): void
+}
+
+function Grid(props: GridProps) {
   const { gameState } = props
+  const { boardSize } = gameState
 
-  if (gameState.length == 0 || gameState[0].length == 0) {
+  if (boardSize.width == 0 || boardSize.height == 0) {
     return null
   }
 
-  const numberOfRows = gameState.length
-  const numberOfCols = gameState[0].length
-  const sideLength = 40
+  const numberOfRows = boardSize.width
+  const numberOfCols = boardSize.height
+  const sideLength   = 40
   const circleRadius = 15
 
   return (
     <div>
       <svg width={ numberOfRows * sideLength } height={ numberOfCols * sideLength } xmlns="http://www.w3.org/2000/svg">
-        { gameState.map((row, i) => {
+        { gameState.grid.map((row, i) => {
           return (row.map((val, j) => {
             return (
               <g key={`${i}${j}`}>
@@ -29,7 +36,7 @@ function Grid(props) {
                   fill="yellow"
                   stroke="#000"
                   onClick={() => {
-                    props.onPress(i, j)
+                    props.onPress({ i, j })
                   }}
                 />
 
@@ -40,7 +47,17 @@ function Grid(props) {
                     cx={ (i * sideLength) + (sideLength / 2) }
                     cy={ (j * sideLength) + (sideLength / 2) }
                     fill={ val == 1 ? 'red' : 'black' }
-                  />
+                  >
+                    <animate
+                      attributeName="cy"
+                      begin="0s"
+                      dur="1s"
+                      from={0}
+                      to={ (j * sideLength) + (sideLength / 2) }
+                      fill="freeze" 
+                    />
+                  </circle>
+
                 }
               </g>
             )

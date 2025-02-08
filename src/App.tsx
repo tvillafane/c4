@@ -1,12 +1,46 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import Grid from './Grid'
+import GameInfoHeader from './GameInfoHeader'
 
 const NUM_HORIZONTAL_CELLS = 20
 const NUM_VERTICAL_CELLS   = 10 
 
-const createGame = (gridWidth: number, gridHeight: number) => {
-  return [...Array(gridWidth)].map(_ => Array(gridHeight).fill(-1))
+export interface Move {
+  i: number,
+  j: number
+}
+
+export interface Player {
+  name: string,
+  checkerColor: string
+}
+
+export interface Dimension {
+  height: number,
+  width: number
+}
+
+export interface GameState {
+  grid: number[][],
+  playerTurnIndex: number,
+  players: Player[],
+  mostRecentMove?: Move,
+  boardSize: Dimension,
+  winningPlayerIndex: number 
+}
+
+const createGame = (gridWidth: number, gridHeight: number): GameState => {
+  return {
+    grid: [...Array(gridWidth)].map(_ => Array(gridHeight).fill(-1)),
+    playerTurnIndex: 0,
+    players: [{ name: "Player 1", checkerColor: '#000000' }, { name: "Player 2", checkerColor: '#F6040A' }],
+    boardSize: {
+      width: gridWidth,
+      height: gridHeight
+    },
+    winningPlayerIndex: -1
+  }
 }
 
 const checkPoints = (values: number[], valueToMatch: number): boolean => {
@@ -19,6 +53,7 @@ const checkPoints = (values: number[], valueToMatch: number): boolean => {
       currentStreak = 0
     }
 
+    //  TODO: could make this dynamic for flair
     if (currentStreak == 4) {
       return true
     }
@@ -27,8 +62,8 @@ const checkPoints = (values: number[], valueToMatch: number): boolean => {
   return false
 }
 
-//  this line: \
-const buildBearDiagonalValues = (startX, startY, gameState) => {
+//  negative slope line
+const buildBearDiagonalValues = (startX: number, startY: number, grid: number[][]) => {
   const values = []
 
   let rhsXrunner = startX
@@ -36,7 +71,7 @@ const buildBearDiagonalValues = (startX, startY, gameState) => {
 
 
   while (rhsXrunner < NUM_HORIZONTAL_CELLS && rhsYrunner < NUM_VERTICAL_CELLS && rhsXrunner >= 0 && rhsYrunner >= 0) {
-    values.push(gameState[rhsXrunner][rhsYrunner])
+    values.push(grid[rhsXrunner][rhsYrunner])
 
     rhsXrunner++
     rhsYrunner++
@@ -46,7 +81,7 @@ const buildBearDiagonalValues = (startX, startY, gameState) => {
   let lhsYrunner = startY - 1
 
   while (lhsXrunner < NUM_HORIZONTAL_CELLS && lhsYrunner < NUM_VERTICAL_CELLS && lhsXrunner >= 0 && lhsYrunner >= 0) {
-    values.push(gameState[lhsXrunner][lhsYrunner])
+    values.push(grid[lhsXrunner][lhsYrunner])
 
     lhsXrunner--
     lhsYrunner--
@@ -55,15 +90,15 @@ const buildBearDiagonalValues = (startX, startY, gameState) => {
   return values
 }
 
-//  this line: /
-const buildBullDiagonalValues = (startX, startY, gameState) => {
+//  positive slope line
+const buildBullDiagonalValues = (startX: number, startY: number, grid: number[][]) => {
   const values = []
 
   let rhsXrunner = startX
   let rhsYrunner = startY
 
   while (rhsXrunner < NUM_HORIZONTAL_CELLS && rhsYrunner < NUM_VERTICAL_CELLS && rhsXrunner >= 0 && rhsYrunner >= 0) {
-    values.push(gameState[rhsXrunner][rhsYrunner])
+    values.push(grid[rhsXrunner][rhsYrunner])
 
     rhsXrunner++
     rhsYrunner--
@@ -73,7 +108,7 @@ const buildBullDiagonalValues = (startX, startY, gameState) => {
   let lhsYrunner = startY + 1
 
   while (lhsXrunner < NUM_HORIZONTAL_CELLS && lhsYrunner < NUM_VERTICAL_CELLS && lhsXrunner >= 0 && lhsYrunner >= 0) {
-    values.unshift(gameState[lhsXrunner][lhsYrunner])
+    values.unshift(grid[lhsXrunner][lhsYrunner])
 
     lhsXrunner--
     lhsYrunner++
@@ -82,17 +117,15 @@ const buildBullDiagonalValues = (startX, startY, gameState) => {
   return values
 }
 
-//  i and j here are the coordinates of the latest checker
-const checkGame = (i: number, j: number, gameState) => {
-  const valueToMatch = gameState[i][j]
- 
-  const columnValues = gameState[i]
-  const rowValues    = gameState.map((col) => {
-    return col[j]
-  })
+const checkGame = (latestMove: Move, grid: number[][]) => {
+  const { i, j }           = latestMove
 
-  const bullDiagonalValues = buildBullDiagonalValues(i, j, gameState)
-  const bearDiagonalValues = buildBearDiagonalValues(i, j, gameState)
+  const valueToMatch       = grid[i][j]
+  const columnValues       = grid[i]
+  const rowValues          = grid.map((col) => col[j])
+
+  const bullDiagonalValues = buildBullDiagonalValues(i, j, grid)
+  const bearDiagonalValues = buildBearDiagonalValues(i, j, grid)
 
   if (checkPoints(columnValues, valueToMatch)) {
     return true
@@ -108,41 +141,60 @@ const checkGame = (i: number, j: number, gameState) => {
 }
 
 function App() {
-  const [gameState, setGame] = useState([])
-  const [turn, setTurn]      = useState(0)
+  const [gameState, setGameState] = useState<GameState>()
 
-  const updateGame = (i: number, j: number) => {
+  const updateGame = (drop: Move) => {
+    if (gameState!.winningPlayerIndex > -1) {
+      return
+    }
+
     let lowestOpenColumn = null
 
     //  TOOD: for performance we could start at the end of the array and work backwards :D
-    for (let index = 0; index < gameState[i].length; index ++) {
-      if (gameState[i][index] == -1) {
+    for (let index = 0; index < gameState!.grid[drop.i].length; index ++) {
+      if (gameState!.grid[drop.i][index] == -1) {
         lowestOpenColumn = index
       }
     }
 
-    if (lowestOpenColumn != null && gameState[i][lowestOpenColumn] != -1) {
+    //  already played here!
+    if (lowestOpenColumn != null && gameState!.grid[drop.i][lowestOpenColumn] != -1) {
       return 
     }
 
-    const copy = JSON.parse(JSON.stringify(gameState))
-    copy[i][lowestOpenColumn] = turn
+    const mostRecentMove: Move = { i: drop.i, j: lowestOpenColumn }
 
-    setGame(copy)
+    const mutableGrid = JSON.parse(JSON.stringify(gameState!.grid))
+ 
+    mutableGrid[mostRecentMove.i][mostRecentMove.j] = gameState!.playerTurnIndex
 
-    const hasUserWon = checkGame(i, lowestOpenColumn, copy)
+    const hasUserWon = checkGame(mostRecentMove, mutableGrid)
 
     if (hasUserWon) {
-      console.log("WE HAVE A WINNER!!", turn % 2 == 0 ? "black" : "red")
+      setGameState({
+        ...gameState!, 
+        grid: mutableGrid, 
+        winningPlayerIndex: gameState!.playerTurnIndex,
+        mostRecentMove
+      })
+    } else {
+      setGameState({
+        ...gameState!, 
+        grid: mutableGrid, 
+        playerTurnIndex: (gameState!.playerTurnIndex + 1) % 2,
+        mostRecentMove
+      })
     }
-
-    setTurn((turn + 1) % 2)
   }
 
   useEffect(() => {
     const initialState = createGame(NUM_HORIZONTAL_CELLS, NUM_VERTICAL_CELLS)
-    setGame(initialState)
+    setGameState(initialState)
   }, [])
+
+  if (!gameState) {
+    return null
+  }
 
   return (
     <>
@@ -151,18 +203,9 @@ function App() {
         gameState={gameState}
         onPress={updateGame}
       />
-      <div className='gameInfo'>
-        <svg width={30} height={30} xmlns="http://www.w3.org/2000/svg">
-          <circle
-            r={15}
-            cx={15}
-            cy={15}
-            fill={ turn % 2 == 0 ? 'black' : 'red' }
-          />
-        </svg>
-        <h3>{ turn % 2 == 0 ? "black" : "red" } to play</h3>
-      </div>
-      
+      <GameInfoHeader
+        gameState={gameState}
+      />
     </>
   )
 }
