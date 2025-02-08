@@ -38,7 +38,7 @@ function Grid(props: GridProps) {
                   fill="yellow"
                   stroke="#000"
                   onClick={() => {
-                    props.onPress({ i, j, dropJ: j })
+                    onPress({ i, j, dropJ: j })
                   }}
                 />
 
@@ -48,7 +48,7 @@ function Grid(props: GridProps) {
                     r={circleRadius}
                     cx={(i * sideLength) + (sideLength / 2)}
                     cy={(j * sideLength) + (sideLength / 2)}
-                    fill={val === 1 ? "red" : "black"}
+                    fill={ gameState.players[val].checkerColor }
                     initial={isLatest ? { cy: gameState.mostRecentMove!.dropJ * sideLength } : {}}
                     animate={isLatest ? { cy: (j * sideLength) + (sideLength / 2) } : {}}
                     transition={isLatest ? { duration: .400 } : {}}
