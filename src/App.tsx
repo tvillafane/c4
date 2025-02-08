@@ -29,7 +29,8 @@ export interface GameState {
   players: Player[],
   mostRecentMove?: Move,
   boardSize: Dimension,
-  winningPlayerIndex: number 
+  winningPlayerIndex: number,
+  winningMoves: Move[]
 }
 
 const createGame = (gridWidth: number, gridHeight: number): GameState => {
@@ -41,31 +42,33 @@ const createGame = (gridWidth: number, gridHeight: number): GameState => {
       width: gridWidth,
       height: gridHeight
     },
-    winningPlayerIndex: -1
+    winningPlayerIndex: -1,
+    winningMoves: []
   }
 }
 
-const checkPoints = (values: number[], valueToMatch: number): boolean => {
-  let currentStreak = 0
+const checkValues = (values: number[], valueToMatch: number): number[] => {
+  let currentStreakIndicies = []
 
   for (let index = 0; index < values.length; index++) {
     if (values[index] == valueToMatch) {
-      currentStreak++
+      currentStreakIndicies.push(index)
     } else {
-      currentStreak = 0
+      currentStreakIndicies = []
     }
 
-    if (currentStreak == WINNING_PATH_LENGTH) {
-      return true
+    if (currentStreakIndicies.length == WINNING_PATH_LENGTH) {
+      return currentStreakIndicies
     }
   }
 
-  return false
+  return []
 }
 
 //  negative slope line
-const buildBearDiagonalValues = (startX: number, startY: number, grid: number[][]) => {
+const buildBearDiagonalValues = (startX: number, startY: number, grid: number[][]): [number[], Move[]] => {
   const values = []
+  const moves  = []
 
   let rhsXrunner = startX
   let rhsYrunner = startY
@@ -73,6 +76,7 @@ const buildBearDiagonalValues = (startX: number, startY: number, grid: number[][
 
   while (rhsXrunner < NUM_HORIZONTAL_CELLS && rhsYrunner < NUM_VERTICAL_CELLS && rhsXrunner >= 0 && rhsYrunner >= 0) {
     values.push(grid[rhsXrunner][rhsYrunner])
+    moves.push({ i: rhsXrunner, j: rhsYrunner, dropJ: 0 })
 
     rhsXrunner++
     rhsYrunner++
@@ -82,24 +86,27 @@ const buildBearDiagonalValues = (startX: number, startY: number, grid: number[][
   let lhsYrunner = startY - 1
 
   while (lhsXrunner < NUM_HORIZONTAL_CELLS && lhsYrunner < NUM_VERTICAL_CELLS && lhsXrunner >= 0 && lhsYrunner >= 0) {
-    values.push(grid[lhsXrunner][lhsYrunner])
+    values.unshift(grid[lhsXrunner][lhsYrunner])
+    moves.unshift({ i: lhsXrunner, j: lhsYrunner, dropJ: 0 })
 
     lhsXrunner--
     lhsYrunner--
   }
 
-  return values
+  return [values, moves]
 }
 
 //  positive slope line
-const buildBullDiagonalValues = (startX: number, startY: number, grid: number[][]) => {
+const buildBullDiagonalValues = (startX: number, startY: number, grid: number[][]): [number[], Move[]] => {
   const values = []
+  const moves  = []
 
   let rhsXrunner = startX
   let rhsYrunner = startY
 
   while (rhsXrunner < NUM_HORIZONTAL_CELLS && rhsYrunner < NUM_VERTICAL_CELLS && rhsXrunner >= 0 && rhsYrunner >= 0) {
     values.push(grid[rhsXrunner][rhsYrunner])
+    moves.push({ i: rhsXrunner, j: rhsYrunner, dropJ: 0 })
 
     rhsXrunner++
     rhsYrunner--
@@ -110,34 +117,62 @@ const buildBullDiagonalValues = (startX: number, startY: number, grid: number[][
 
   while (lhsXrunner < NUM_HORIZONTAL_CELLS && lhsYrunner < NUM_VERTICAL_CELLS && lhsXrunner >= 0 && lhsYrunner >= 0) {
     values.unshift(grid[lhsXrunner][lhsYrunner])
+    moves.unshift({ i: lhsXrunner, j: lhsYrunner, dropJ: 0 })
 
     lhsXrunner--
     lhsYrunner++
   }
 
-  return values
+  return [values, moves]
 }
 
-const checkGame = (latestMove: Move, grid: number[][]) => {
+const checkGame = (latestMove: Move, grid: number[][]): Move[] => {
   const { i, j }           = latestMove
 
   const valueToMatch       = grid[i][j]
+
   const columnValues       = grid[i]
+  const columnCoords       = grid[i].map((_, index) => {
+    return {
+      i,
+      j: index,
+      dropJ: 0
+    } as Move
+  })
+
   const rowValues          = grid.map((col) => col[j])
+  const rowCoords          = grid.map((_, index) => {
+    return {
+      i: index, 
+      j,
+      dropJ: 0
+    } as Move
+  })
 
-  const bullDiagonalValues = buildBullDiagonalValues(i, j, grid)
-  const bearDiagonalValues = buildBearDiagonalValues(i, j, grid)
+  const [bullDiagonalValues, bullDiagonalCoords] = buildBullDiagonalValues(i, j, grid)
+  const [bearDiagonalValues, bearDiagonalCoords] = buildBearDiagonalValues(i, j, grid)
 
-  if (
-    checkPoints(columnValues, valueToMatch) || 
-    checkPoints(rowValues, valueToMatch) || 
-    checkPoints(bullDiagonalValues, valueToMatch) || 
-    checkPoints(bearDiagonalValues, valueToMatch)
-  ) {
-    return true
+  const rowIndices  = checkValues(rowValues, valueToMatch)
+  const colIndices  = checkValues(columnValues, valueToMatch)
+  const bullIndices = checkValues(bullDiagonalValues, valueToMatch)
+  const bearIndices = checkValues(bearDiagonalValues, valueToMatch)
+
+  // console.log("COL", columnCoords)
+  // console.log("ROW", rowCoords)
+  // console.log("BULL", bullDiagonalCoords)
+  // console.log("BEAR", bearDiagonalCoords)
+
+  if (rowIndices.length > 0) {
+    return rowIndices.map(index => rowCoords[index])
+  } else if (colIndices.length > 0) {
+    return colIndices.map(index => columnCoords[index])
+  } else if (bullIndices.length > 0) {
+    return bullIndices.map(index => bullDiagonalCoords[index])
+  } else if (bearIndices.length > 0) {
+    return bearIndices.map(index => bearDiagonalCoords[index])
   }
 
-  return false
+  return []
 }
 
 function App() {
@@ -181,14 +216,15 @@ function App() {
  
     mutableGrid[mostRecentMove.i][mostRecentMove.j] = gameState!.playerTurnIndex
 
-    const hasUserWon = checkGame(mostRecentMove, mutableGrid)
+    const winningMoves = checkGame(mostRecentMove, mutableGrid)
 
-    if (hasUserWon) {
+    if (winningMoves.length > 0) {
       setGameState({
         ...gameState!, 
         grid: mutableGrid, 
         winningPlayerIndex: gameState!.playerTurnIndex,
-        mostRecentMove
+        mostRecentMove,
+        winningMoves
       })
     } else {
       setGameState({

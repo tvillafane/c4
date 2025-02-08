@@ -25,7 +25,10 @@ function Grid(props: GridProps) {
       <svg width={ numberOfRows * sideLength } height={ numberOfCols * sideLength } xmlns="http://www.w3.org/2000/svg">
         { gameState.grid.map((row, i) => {
           return (row.map((val, j) => {
-            const isLatest = gameState.mostRecentMove?.i == i && gameState.mostRecentMove?.j == j
+            const isLatest  = gameState.mostRecentMove?.i == i && gameState.mostRecentMove?.j == j
+            const fillColor = gameState.winningMoves.filter((move) => {
+              return move.i == i && move.j == j
+            }).length > 0 ? '#05DB05' : '#F7F700'
 
             return (
               <g key={`${i}${j}`}>
@@ -35,7 +38,7 @@ function Grid(props: GridProps) {
                   height={sideLength} 
                   x={i * sideLength} 
                   y={j * sideLength} 
-                  fill="yellow"
+                  fill={fillColor}
                   stroke="#000"
                   onClick={() => {
                     onPress({ i, j, dropJ: j })
