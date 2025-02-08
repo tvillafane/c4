@@ -8,7 +8,8 @@ const NUM_VERTICAL_CELLS   = 10
 
 export interface Move {
   i: number,
-  j: number
+  j: number,
+  dropJ: number
 }
 
 export interface Player {
@@ -162,7 +163,11 @@ function App() {
       return 
     }
 
-    const mostRecentMove: Move = { i: drop.i, j: lowestOpenColumn }
+    const mostRecentMove: Move = { 
+      i: drop.i, 
+      j: lowestOpenColumn!, 
+      dropJ: drop.j
+    }
 
     const mutableGrid = JSON.parse(JSON.stringify(gameState!.grid))
  

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import './App.css'
 import { Move, GameState } from './App'
 
@@ -8,8 +8,8 @@ interface GridProps {
 }
 
 function Grid(props: GridProps) {
-  const { gameState } = props
-  const { boardSize } = gameState
+  const { gameState, onPress } = props
+  const { boardSize }          = gameState
 
   if (boardSize.width == 0 || boardSize.height == 0) {
     return null
@@ -25,6 +25,8 @@ function Grid(props: GridProps) {
       <svg width={ numberOfRows * sideLength } height={ numberOfCols * sideLength } xmlns="http://www.w3.org/2000/svg">
         { gameState.grid.map((row, i) => {
           return (row.map((val, j) => {
+            const isLatest = gameState.mostRecentMove?.i == i && gameState.mostRecentMove?.j == j
+
             return (
               <g key={`${i}${j}`}>
                 <rect 
@@ -36,28 +38,21 @@ function Grid(props: GridProps) {
                   fill="yellow"
                   stroke="#000"
                   onClick={() => {
-                    props.onPress({ i, j })
+                    props.onPress({ i, j, dropJ: j })
                   }}
                 />
 
                 { val != -1 && 
-                  <circle
+                  <motion.circle
                     key={`c_${i}${j}`}
-                    r={ circleRadius }
-                    cx={ (i * sideLength) + (sideLength / 2) }
-                    cy={ (j * sideLength) + (sideLength / 2) }
-                    fill={ val == 1 ? 'red' : 'black' }
-                  >
-                    <animate
-                      attributeName="cy"
-                      begin="0s"
-                      dur="1s"
-                      from={0}
-                      to={ (j * sideLength) + (sideLength / 2) }
-                      fill="freeze" 
-                    />
-                  </circle>
-
+                    r={circleRadius}
+                    cx={(i * sideLength) + (sideLength / 2)}
+                    cy={(j * sideLength) + (sideLength / 2)}
+                    fill={val === 1 ? "red" : "black"}
+                    initial={isLatest ? { cy: gameState.mostRecentMove!.dropJ * sideLength } : {}}
+                    animate={isLatest ? { cy: (j * sideLength) + (sideLength / 2) } : {}}
+                    transition={isLatest ? { duration: .400 } : {}}
+                  />
                 }
               </g>
             )
